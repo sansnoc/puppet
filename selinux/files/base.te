@@ -1,0 +1,13 @@
+module base 1.0.0;
+
+require {
+	class file write;
+	type selinux_config_t;
+	type semanage_t;
+	type setfiles_t;
+	type tmp_t;
+	role system_r;
+};
+
+allow semanage_t tmp_t:file write;
+allow setfiles_t selinux_config_t:file write;

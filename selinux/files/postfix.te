@@ -1,0 +1,10 @@
+module postfix 1.0.0;
+
+require {
+	class dir getattr;
+	type file_t;
+	type postfix_master_t;
+	role system_r;
+};
+
+allow postfix_master_t file_t:dir getattr;

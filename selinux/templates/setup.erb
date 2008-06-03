@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Where to store selinux related files
+SOURCE=/etc/selinux/local
+BUILD=/etc/selinux/local
+
+/usr/bin/checkmodule -M -m -o ${BUILD}/<%= name %>.mod ${SOURCE}/<%= name %>.te
+/usr/bin/semodule_package -o ${BUILD}/<%= name %>.pp -m ${BUILD}/<%= name %>.mod
+/usr/sbin/semodule -i ${BUILD}/<%= name %>.pp
+
+/bin/rm ${BUILD}/<%= name %>.mod ${BUILD}/<%= name %>.pp
+

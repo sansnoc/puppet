@@ -1,0 +1,125 @@
+.\"       $Id: dirvish-runall.8,v 12.0 2004/02/25 02:42:14 jw Exp $  $Name: Dirvish-1_2 $
+.ds d \-\^\-
+.ds o \fR[\fP
+.ds c \fR]\fP
+.ds | \fR|\fP
+.ds bank \fIbank\fP
+.ds vault \fIvault\fP
+.ds branch \fIbranch\fP
+.ds image \fIimage\fP
+.de D
+\\.B \*d\\$1
+..
+.de DR
+\\.BR \*d\\$1 \\$2
+..
+.de Bi
+\\.BI \\$1 " \\$2"
+..
+.de DI
+\\.BI \*d\\$1 \\$2
+..
+.de Di
+\\.BI \*d\\$1 " \\$2"
+..
+.de See
+See \fB\\$1\fP for more details.
+..
+.de SeeIn
+See \fB\\$1\fP in \fB\\$2\fP for more details.
+..
+.de multiple
+Multiple \fB\\$1:\fP values will accumulate.
+..
+.de default
+Default value: \fB\\$1\fP
+..
+.TH DIRVISH-RUNALL 8
+.SH NAME
+dirvish\-runall \- run a set of dirvish backup jobs.
+.SH SYNOPSIS
+.BI dirvish\-runall [OPTIONS]
+.SH DESCRIPTION
+Run all the jobs specified in the
+.B Runall
+field of the dirvish master configuration file.
+.SH OPTIONS
+Each option may be unambiguously abbreviated.
+.TP
+.Di config configfile
+Read
+.I configfile
+for the
+.B Runall:
+field.
+By default
+.B dirvish\-runall
+will use the
+.B Runall:
+field from the master configuration file.
+
+This will only be used by
+.B dirvish-runall
+itself
+and not be propagated to the
+.B dirvish
+processes.
+
+.See dirvish.conf(5)
+.TP
+.D no\-run
+.TP
+.D dry\-run
+Don't actually do anything.
+Just display what would have happened.
+.TP
+.D quiet
+Run quietly, only report errors.
+
+Normally
+.B dirvish\-runall
+will report the dirvish commands invoked with timestamps.
+.TP
+.D version
+Print the version information and exit.
+.SH EXIT CODES
+To facilitate further automation and integration of
+.B dirvish-runall
+with other tools
+.B dirvish-runall
+provides rationalised exit codes.
+The exit codes are range based.  While the code for
+a specific error may change from one version to another it
+will remain within the specified range.  So don't test for
+specific exit codes but instead test for a range of values.
+To the degree possible higher value ranges indicate more
+severe errors.
+.TP
+0
+success
+.TP
+1-199
+Number of
+.B dirvish
+jobs that failed.  If more than 199 jobs
+failed 199 will be the exit code.
+.TP
+200-219
+An error was encountered in loading a configuration file.
+.TP
+220-254
+An error was detected in the configuration.
+.TP
+255
+Incorrect usage.
+.SH FILES
+.TP
+.B /etc/dirvish/master.conf
+alternate master configuration file.
+.TP
+.B /etc/dirvish.conf
+master configuration file.
+.SH SEE ALSO
+.nf
+dirvish.conf(5)
+.SH BUGS

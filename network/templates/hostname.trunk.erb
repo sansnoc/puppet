@@ -1,0 +1,11 @@
+################################################
+#                                              #
+# THIS FILE IS MANAGED BY PUPPET. DO NOT EDIT! #
+#                                              #
+################################################
+trunkproto <%= trunkproto %> <% trunkports.each do |tp| %> trunkport <%= tp %><% end %>
+inet <%= ip %> <%= netmask %> <%= bcast %>
+<% if routes -%>
+<% routes.each do |route| %>! route -qn add -net <%= route %>
+<% end -%>
+<% end -%>

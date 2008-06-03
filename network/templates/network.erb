@@ -1,0 +1,17 @@
+################################################
+#                                              #
+# THIS FILE IS MANAGED BY PUPPET. DO NOT EDIT! #
+#                                              #
+################################################
+<%if netstate == 'present' -%>
+NETWORKING=yes
+<% elsif netstate == 'absent' -%>
+NETWORKING=no
+<% end -%>
+NETWORKING_IPV6=no
+HOSTNAME=<%= fqdn %>
+NOZEROCONF=yes
+<% if gwdev != '' -%>
+GATEWAY=<%= gw %>
+GATEWAYDEV=<%= gwdev %>
+<% end -%>

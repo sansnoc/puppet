@@ -1,0 +1,45 @@
+module syslog-ng 1.0.7;
+
+require {
+        type postfix_etc_t;
+        type postfix_public_t;
+        type postfix_spool_t;
+        type file_t;
+        type proc_t;
+        type fs_t;
+        type syslogd_exec_t;
+        type var_spool_t;
+        type postfix_postdrop_exec_t;
+        type bin_t;
+        type sbin_t;
+        type syslogd_t;
+        type postfix_spool_maildrop_t;
+        type sendmail_exec_t;
+        class process setrlimit;
+        class fifo_file { write getattr };
+        class dir { create write remove_name search add_name setattr };
+        class file { rename execute setattr read create execute_no_trans write getattr append };
+        class filesystem associate;
+}
+
+#============= syslogd_t ==============
+allow syslogd_t bin_t:file { read execute getattr execute_no_trans };
+allow syslogd_t file_t:file { create setattr append write };
+allow syslogd_t file_t:dir { write create add_name setattr };
+allow syslogd_t postfix_etc_t:dir search;
+allow syslogd_t postfix_etc_t:file { read getattr };
+allow syslogd_t postfix_postdrop_exec_t:file { read execute execute_no_trans };
+allow syslogd_t postfix_public_t:dir search;
+allow syslogd_t postfix_public_t:fifo_file { write getattr };
+allow syslogd_t postfix_spool_maildrop_t:dir { write remove_name search add_name };
+allow syslogd_t postfix_spool_maildrop_t:file { rename write create getattr setattr };
+allow syslogd_t postfix_spool_t:dir search;
+allow syslogd_t proc_t:file { read getattr };
+allow syslogd_t sbin_t:dir search;
+allow syslogd_t self:process setrlimit;
+allow syslogd_t self:dir { write create add_name setattr search };
+allow syslogd_t self:file { create setattr append write };
+allow syslogd_t fs_t:filesystem associate;
+allow syslogd_t sendmail_exec_t:file { read execute execute_no_trans };
+allow syslogd_t syslogd_exec_t:file execute_no_trans;
+allow syslogd_t var_spool_t:dir search;

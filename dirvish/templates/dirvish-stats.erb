@@ -1,0 +1,431 @@
+#!/usr/bin/perl
+$CONFDIR = "/etc/dirvish";
+$mailto='<%= email %>';
+
+$yesterday=time-86400;
+$today=time;
+
+#$usedate=$yesterday;
+$usedate=$<%= period %>;
+
+# dstat.pl
+# Mike Lerley [mike@rentageekme.com], 4/10/06
+# Portions pulled from dirvish-runall.pl and dirvish-status.sh by 
+
+
+
+
+#       $Id: dirvish-runall.pl,v 12.0 2004/02/25 02:42:14 jw Exp $  $Name: Dirvish-1_2 $
+
+$VERSION = ('$Name: Dirvish-1_2 $' =~ /Dirvish/i)
+	? ('$Name: Dirvish-1_2 $' =~ m/^.*:\s+dirvish-(.*)\s*\$$/i)[0]
+	: '1.1.2 patch' . ('$Id: dirvish-runall.pl,v 12.0 2004/02/25 02:42:14 jw Exp $'
+		=~ m/^.*,v(.*:\d\d)\s.*$/)[0];
+$VERSION =~ s/_/./g;
+
+
+#########################################################################
+#                                                         		#
+#	Copyright 2002 and $Date: 2004/02/25 02:42:14 $
+#                         Pegasystems Technologies and J.W. Schultz 	#
+#                                                         		#
+#	Licensed under the Open Software License version 2.0		#
+#                                                         		#
+#	This program is free software; you can redistribute it		#
+#	and/or modify it under the terms of the Open Software		#
+#	License, version 2.0 by Lauwrence E. Rosen.			#
+#                                                         		#
+#	This program is distributed in the hope that it will be		#
+#	useful, but WITHOUT ANY WARRANTY; without even the implied	#
+#	warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR		#
+#	PURPOSE.  See the Open Software License for details.		#
+#                                                         		#
+#########################################################################
+
+use Time::ParseDate;
+use POSIX qw(strftime);
+use Getopt::Long;
+
+sub loadconfig;
+sub seppuku;
+
+sub usage
+{
+	my $message = shift(@_);
+
+	length($message) and print STDERR $message, "\n\n";
+
+	$! and exit(255); # because getopt seems to send us here for death
+
+	print STDERR <<EOUSAGE;
+USAGE
+	dirvish-runall OPTIONS
+OPTIONS
+	--config configfile
+	--no-run
+	--quiet
+	--version
+EOUSAGE
+
+	exit 255;
+}
+
+$Options = {
+	version		=> sub {
+			print STDERR "dirvish version $VERSION\n";
+			exit(0);
+		},
+	help		=> \&usage,
+};
+
+GetOptions($Options, qw(
+		config=s
+		quiet no-run|dry-run
+		version help
+	)) or usage;
+
+if ($$Options{config})
+{
+	$Config = loadconfig(undef, $$Options{config})
+}
+elsif ($CONFDIR =~ /dirvish$/ && -f "$CONFDIR.conf")
+{
+	$Config = loadconfig(undef, "$CONFDIR.conf");
+}
+elsif (-f "$CONFDIR/master.conf")
+{
+	$Config = loadconfig(undef, "$CONFDIR/master.conf");
+}
+elsif (-f "$CONFDIR/dirvish.conf")
+{
+	seppuku 250, <<EOERR;
+ERROR: no master configuration file.
+	An old $CONFDIR/dirvish.conf file found.
+	Please read the dirvish release notes.
+EOERR
+}
+else
+{
+	seppuku 251, "ERROR: no global configuration file";
+}
+$$Config{Dirvish} ||= 'dirvish';
+
+$$Options{'no-run'} and $$Options{quiet} = 0;
+
+$errors = 0;
+
+
+for $sched (@{$$Config{Runall}})
+{
+	($vault, $itime) = split(/\s+/, $sched);
+	($v,$b)=split(/:/,$vault);
+	$cfile=$$Config{bank}[0]."/$v/dirvish/$b.conf\n";
+	$id=$$Config{'image-default'};
+	open(C,$cfile) || die "Can't open file $cfile: $!";
+	while(<C>) {
+		chomp;
+		if(m/image-default/) {
+			(undef,$id)=split(/:\s*/);
+		}
+	}
+	close C;
+	$dir=$$Config{bank}[0]."/$v/$b-".strftime("%Y%m%d", localtime($usedate))."-000000";
+
+
+  	$themail.="================== $v-$b ==================\n";
+
+  	# Check for a summary or log file (at least one should be
+	# present if a backup occurred
+  	if(!-e "$dir/log.gz" || !-e "$dir/summary") {
+    		# If no backup last night, then warn.
+		# Also, try to guess the last night a backup occurred.
+		# (yes, it's crude.)
+		$themail.="** WARNING: This machine not backed up!\n";
+		$last=`(ls -dt [0-9]* 2>/dev/null)|head -1`;
+		if(!$last) { $last="NEVER" };
+		$themail.="             (last backup: $last)\n";
+		$WARNINGS.=" $v-$b";
+	} else {
+		# Otherwise, we assume that if there is no Status: success, 
+		# the backup wasn't successful. It could be that the backup is
+		# still running, but is still worth a look.
+		if(!`grep -c "Status: success" $dir/summary`) {
+			$themail.="** WARNING: Backup not successful\n\n";
+			# Keep a list of machines with warnings.
+			$WARNINGS.=" $v";
+		}
+
+		# Copy the backup's summary file to the email, ignoring
+		# any exclude: lines (to keep the email short, but useful.)
+		$summ='';
+		open(F,"$dir/summary") || warn "Can't open summary file: $!";
+		while(<F>) {
+			$fl=$_;
+			$summ.=$_ if $fl!~/(^ |^exclude:|^$)/;
+		}
+		$themail.=$summ;
+
+		# MDL 9/1/05 - copy end of log file to get file/byte counts too
+		$themail.=`zcat $dir/log.gz |tail -13`;
+	}
+	$themail.="\n\n";
+}
+
+$prefix="Disk usage:\n".`/bin/df -h`."\n";
+
+# Include a [**] notation on the subject line if there were warnings. 
+if($WARNINGS) {
+	$WARNSUB="[**] ";
+	$prefix="\nThe following branches had warnings:\n\t$WARNINGS\n\n".$prefix;
+} else {
+	$WARNSUB="";
+}
+$themail=$prefix.$themail;
+
+open(M,"|/bin/mail -s \"${WARNSUB}Dirvish status (`hostname`)\" $mailto") || warn "Can't mail: $!";
+print M $themail;
+close M;
+
+
+exit ($errors < 200 ? $errors : 199);
+#	Get patch level of loadconfig.pl in case exit codes
+#	are needed.
+#		$Id: loadconfig.pl,v 12.0 2004/02/25 02:42:15 jw Exp $
+
+
+#########################################################################
+#                                                         		#
+#	Copyright 2002 and $Date: 2004/02/25 02:42:15 $
+#                         Pegasystems Technologies and J.W. Schultz 	#
+#                                                         		#
+#	Licensed under the Open Software License version 2.0		#
+#                                                         		#
+#########################################################################
+
+sub seppuku	# Exit with code and message.
+{
+	my ($status, $message) = @_;
+
+	chomp $message;
+	if ($message)
+	{
+		$seppuku_prefix and print STDERR $seppuku_prefix, ': ';
+		print STDERR $message, "\n";
+	}
+	exit $status;
+}
+
+sub slurplist
+{
+	my ($key, $filename, $Options) = @_;
+	my $f;
+	my $array;
+
+	$filename =~ m(^/) and $f = $filename;
+	if (!$f && ref($$Options{vault}) ne 'CODE')
+	{
+		$f = join('/', $$Options{Bank}, $$Options{vault},
+			'dirvish', $filename);
+		-f $f or $f = undef;
+	}
+	$f or $f = "$CONFDIR/$filename";
+	open(PATFILE, "<$f") or seppuku 229, "cannot open $filename for $key list";
+	$array = $$Options{$key};
+	while(<PATFILE>)
+	{
+		chomp;
+		length or next;
+		push @{$array}, $_;
+	}
+	close PATFILE;
+}
+
+#   loadconfig -- load configuration file
+#   SYNOPSYS
+#     	loadconfig($opts, $filename, \%data)
+#
+#   DESCRIPTION
+#   	load and parse a configuration file into the data
+#   	hash.  If the filename does not contain / it will be
+#   	looked for in the vault if defined.  If the filename
+#   	does not exist but filename.conf does that will
+#   	be read.
+#
+#   OPTIONS
+#	Options are case sensitive, upper case has the
+#	opposite effect of lower case.  If conflicting
+#	options are given only the last will have effect.
+#
+#   	f	Ignore fields in config file that are
+#   		capitalized.
+#   
+#   	o	Config file is optional, return undef if missing.
+#   
+#   	R	Do not allow recoursion.
+#
+#   	g	Only load from global directory.
+#
+#	
+#   
+#   LIMITATIONS
+#   	Only way to tell whether an option should be a list
+#   	or scalar is by the formatting in the config file.
+#   
+#   	Options reqiring special handling have to have that
+#   	hardcoded in the function.
+#
+
+sub loadconfig
+{
+	my ($mode, $configfile, $Options) = @_;
+	my $confile = undef;
+	my ($key, $val);
+	my $CONFIG;
+	ref($Options) or $Options = {};
+	my %modes;
+	my ($conf, $bank, $k);
+
+	$modes{r} = 1;
+	for $_ (split(//, $mode))
+	{
+		if (/[A-Z]/)
+		{
+			$_ =~ tr/A-Z/a-z/;
+			$modes{$_} = 0;
+		} else {
+			$modes{$_} = 1;
+		}
+	}
+
+
+	$CONFIG = 'CFILE' . scalar(@{$$Options{Configfiles}});
+
+	$configfile =~ s/^.*\@//;
+
+	if($configfile =~ m[/])
+	{
+		$confile = $configfile;
+	}
+	elsif($configfile ne '-')
+	{
+		if(!$modes{g} && $$Options{vault} && $$Options{vault} ne 'CODE')
+		{
+			if(!$$Options{Bank})
+			{
+				my $bank;
+				for $bank (@{$$Options{bank}})
+				{
+					if (-d "$bank/$$Options{vault}")
+					{
+						$$Options{Bank} = $bank;
+						last;
+					}
+				}
+			}
+			if ($$Options{Bank})
+			{
+				$confile = join('/', $$Options{Bank},
+					$$Options{vault}, 'dirvish',
+					$configfile);
+				-f $confile || -f "$confile.conf"
+					or $confile = undef;
+			}
+		}
+		$confile ||= "$CONFDIR/$configfile";
+	}
+
+	if($configfile eq '-')
+	{
+		open($CONFIG, $configfile) or seppuku 221, "cannot open STDIN";
+	} else {
+		! -f $confile && -f "$confile.conf" and $confile .= '.conf';
+
+		if (! -f "$confile")
+		{
+			$modes{o} and return undef;
+			seppuku 222, "cannot open config file: $configfile";
+		}
+
+		grep(/^$confile$/, @{$$Options{Configfiles}})
+			and seppuku 224, "ERROR: config file looping on $confile";
+
+		open($CONFIG, $confile)
+			or seppuku 225, "cannot open config file: $configfile";
+	}
+	push(@{$$Options{Configfiles}}, $confile);
+
+	while(<$CONFIG>)
+	{
+		chomp;
+		s/\s*#.*$//;
+		s/\s+$//;
+		/\S/ or next;
+		
+		if(/^\s/ && $key)
+		{
+			s/^\s*//;
+			push @{$$Options{$key}}, $_;
+		}
+		elsif(/^SET\s+/)
+		{
+			s/^SET\s+//;
+			for $k (split(/\s+/))
+			{
+				$$Options{$k} = 1;
+			}
+		}
+		elsif(/^UNSET\s+/)
+		{
+			s/^UNSET\s+//;
+			for $k (split(/\s+/))
+			{
+				$$Options{$k} = undef;
+			}
+		}
+		elsif(/^RESET\s+/)
+		{
+			($key = $_) =~ s/^RESET\s+//;
+			$$Options{$key} = [ ];
+		}
+		elsif(/^[A-Z]/ && $modes{f})
+		{
+			$key = undef;
+		}
+		elsif(/^\S+:/)
+		{
+			($key, $val) = split(/:\s*/, $_, 2);
+			length($val) or next;
+			$k = $key; $key = undef;
+
+			if ($k eq 'config')
+			{
+				$modes{r} and loadconfig($mode . 'O', $val, $Options);
+				next;
+			}
+			if ($k eq 'client')
+			{
+				if ($modes{r} && ref ($$Options{$k}) eq 'CODE')
+				{
+					loadconfig($mode .  'og', "$CONFDIR/$val", $Options);
+				}
+				$$Options{$k} = $val;
+				next;
+			}
+			if ($k eq 'file-exclude')
+			{
+				$modes{r} or next;
+
+				slurplist('exclude', $val, $Options);
+				next;
+			}
+			if (ref ($$Options{$k}) eq 'ARRAY')
+			{
+				push @{$$Options{$k}}, $_;
+			} else {
+				$$Options{$k} = $val;
+			}
+		}
+	}
+	close $CONFIG;
+	return $Options;
+}

@@ -1,0 +1,2 @@
+<% require 'digest/md5'-%>auth 1
+1 <%= signature %> <% hash = Digest::MD5.hexdigest(password) -%><%= hash %>

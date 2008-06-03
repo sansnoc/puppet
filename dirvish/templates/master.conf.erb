@@ -1,0 +1,29 @@
+# This file is under the control of Puppet - Do Not Edit Locally
+
+bank:
+<% banks.each do |bank| %>        <%= bank %>
+<% end %>
+
+
+image-default: <%= imagedef %>
+index:	<%= index %>
+log:	<%= log %>
+
+exclude:
+#	/var/cache/apt/archives/*.deb
+#	/usr/src/**/*.o
+#	lost+found/
+<% excludes.each do |rule| %>        <%= rule %>
+<% end %>
+
+Runall:
+<% runall.each do |run| %>        <%= run %> <%= time %>
+<% end %>
+
+expire-default: <%= expiredef %>
+
+expire-rule:
+	#MIN  HR    DOM   MON         DOW   EXPIRE
+<% expires.each do |exp| %>        <%= exp %>
+<% end %>
+

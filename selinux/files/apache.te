@@ -1,0 +1,42 @@
+module apache 1.0.8;
+
+require {
+        class capability { sys_admin sys_resource };
+        class file { append execmod execute execute_no_trans getattr ioctl read unlink write }; 
+        class lnk_file { getattr read };
+        class process execheap;
+        class tcp_socket name_connect;
+        type default_t;
+        type home_root_t;
+        type hostname_exec_t;
+        type httpd_log_t; 
+        type httpd_sys_script_t;
+        type httpd_t;
+        type httpd_tmp_t;
+        type java_exec_t;
+        type lib_t;
+        type usr_t;
+        type mysqld_port_t;
+        type setfiles_t;
+        type tmp_t;
+        type unconfined_t;
+        role system_r;
+        type user_home_t; 
+        type user_home_dir_t;
+};
+
+allow httpd_t default_t:lnk_file { getattr read };
+allow httpd_t home_root_t:lnk_file { getattr read };
+allow httpd_t hostname_exec_t:file { execute execute_no_trans getattr read };
+allow httpd_t httpd_log_t:file { unlink write };
+allow httpd_t mysqld_port_t:tcp_socket name_connect;
+allow httpd_t self:capability { sys_admin sys_resource };
+allow httpd_t self:process execheap;
+allow httpd_t user_home_t:file { append execute execute_no_trans getattr ioctl read };
+allow httpd_t user_home_dir_t:file { append getattr };
+allow httpd_t usr_t:file execute_no_trans;
+allow httpd_t java_exec_t:file { read getattr execute_no_trans execute };
+allow httpd_sys_script_t default_t:lnk_file read;
+allow httpd_sys_script_t httpd_tmp_t:file { read write };
+allow setfiles_t tmp_t:file { read write };
+allow unconfined_t lib_t:file execmod;

@@ -1,0 +1,35 @@
+################################################
+#                                              #
+# THIS FILE IS MANAGED BY PUPPET. DO NOT EDIT! #
+#                                              #
+################################################
+<% if interface_type == 'alias' -%>
+DEVICE=<%= interface %>:<%= ifnum %>
+<% if ifstate == 'present' -%>
+ONPARENT=yes
+<% elsif ifstate == 'absent' -%>
+ONPARENT=no
+<% end -%>
+<% else -%>
+DEVICE=<%= interface %>
+<% if ifstate == 'present' -%>
+ONBOOT=yes
+<% elsif ifstate == 'absent' -%>
+ONBOOT=no
+<% end -%>
+<% end -%>
+<% if interface_type != 'tap' && interface_type != 'slave' -%>
+<% if name.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/) -%>
+IPADDR=<%= name %>
+NETMASK=<%= netmask %>
+<% end -%>
+<% end -%>
+<% if bondopts != '' && (interface_type == 'bond' || interface_type == 'tap') -%>
+BONDING_OPTS="<%= bondopts %>"
+<% end -%>
+<% if interface_type == 'slave' -%>
+MASTER=<%= master %>
+SLAVE=yes
+<% end -%>
+BOOTPROTO=none
+USERCTL=no

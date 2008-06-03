@@ -1,0 +1,140 @@
+.\"       $Id: dirvish-locate.8,v 12.0 2004/02/25 02:42:14 jw Exp $  $Name: Dirvish-1_2 $
+.ds d \-\^\-
+.ds o \fR[\fP
+.ds c \fR]\fP
+.ds | \fR|\fP
+.ds bank \fIbank\fP
+.ds vault \fIvault\fP
+.ds branch \fIbranch\fP
+.ds image \fIimage\fP
+.de D
+\\.B \*d\\$1
+..
+.de DR
+\\.BR \*d\\$1 \\$2
+..
+.de Bi
+\\.BI \\$1 " \\$2"
+..
+.de DI
+\\.BI \*d\\$1 \\$2
+..
+.de Di
+\\.BI \*d\\$1 " \\$2"
+..
+.de See
+See \fB\\$1\fP for details.
+..
+.de SeeIn
+See \fB\\$1\fP in \fB\\$2\fP for details.
+..
+.de multiple
+Multiple \fB\\$1:\fP values will accumulate.
+..
+.de default
+Default value: \fB\\$1\fP
+..
+.TH DIRVISH-LOCATE 8
+.SH NAME
+dirvish\-locate \- locate file versions in dirvish images
+.SH SYNOPSIS
+.B dirvish\-locate
+.I vault\*o:branch\*c
+.I pattern
+.SH DESCRIPTION
+Locate versions of files in a dirvish vault
+
+The index of each image specified \*[vault] is searched for paths matching
+.IR pattern .
+Each path found matching the
+.I pattern
+will be reported followed by a modification time of each version of the
+file and all images having a link to it.
+
+The optional \*[branch] specification will restrict
+searching to the specified branch.
+
+Images with an error status will be skipped as will any
+without index files.  The index file may be compressed by
+gzip or bzip2.
+See
+.B tree
+and
+.B index
+in
+.B dirvish.conf(5)
+for details.
+
+The
+.I pattern
+is a
+.B perl
+regular expression to match the final component of the path.
+Append
+.B .*
+to the end of the pattern if you wish to match any substring
+of the whole path
+or 
+.B $
+if you wish to anchor the pattern to the end of the path.
+.See perlre(1)
+
+Directories are excluded from matching as they would wind up
+matching every file within them anyway.
+Symlinks are also excluded from matching.
+
+If the
+.I pattern
+matches too many paths
+.B dirvish\-locate
+will only report the paths matched and not versions.
+As a sanity check if the number of matches is really excessive
+.B dirvish\-locate
+will limit the number of images searched.
+Excessive matches is an indication of an insufficiently
+specific
+.IR pattern .
+Use the resulting path list to compose a more specific one.
+.SH EXIT CODES
+To facilitate further automation and integration of
+.B dirvish-locate
+with other tools
+.B dirvish-locate provides rationalised exit codes.
+The exit codes are range based.  While the code for
+a specific error may change from one version to another it
+will remain within the specified range.  So don't test for
+specific exit codes but instead test for a range of values.
+To the degree possible higher value ranges indicate more
+severe errors.
+.TP
+0
+success
+200-219
+An error was encountered in loading a configuration file.
+.TP
+220-254
+An error was detected in the configuration.
+.TP
+255
+Incorrect usage.
+.SH FILES
+.TP
+.B /etc/dirvish/master.conf
+alternate master configuration file.
+.TP
+.B /etc/dirvish.conf
+master configuration file.
+.TP
+.IB bank/vault/image/ summary
+image creation summary.
+.TP
+.IB bank/vault/image/ index
+.TP
+.IB bank/vault/image/ index.gz
+.TP
+.IB bank/vault/image/ index.bz2
+dirvish index file.
+.SH SEE ALSO
+.nf
+dirvish.conf(5)
+.SH BUGS

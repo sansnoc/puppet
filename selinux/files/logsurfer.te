@@ -1,0 +1,28 @@
+module logsurfer 1.0.13;
+
+require {
+        class dir { add_name remove_name search write };
+        class fifo_file { getattr write };
+        class file { create execute execute_no_trans getattr read rename setattr write };
+        class process setrlimit;
+        type postfix_postdrop_exec_t;
+        type postfix_public_t;
+        type postfix_spool_maildrop_t;
+        type postfix_spool_t;
+        type syslogd_exec_t;
+        type proc_t;
+        type syslogd_t;
+        type var_spool_t;
+        role system_r;
+};
+
+allow syslogd_t postfix_postdrop_exec_t:file { execute execute_no_trans read };
+allow syslogd_t postfix_public_t:dir search;
+allow syslogd_t postfix_public_t:fifo_file { getattr write };
+allow syslogd_t postfix_spool_maildrop_t:dir { add_name remove_name search write };
+allow syslogd_t postfix_spool_maildrop_t:file { create getattr rename setattr write };
+allow syslogd_t postfix_spool_t:dir search;
+allow syslogd_t self:process setrlimit;
+allow syslogd_t var_spool_t:dir search;
+allow syslogd_t proc_t:file read;
+allow syslogd_t syslogd_exec_t:file execute_no_trans;

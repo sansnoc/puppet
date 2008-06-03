@@ -1,0 +1,151 @@
+.\"       $Id: dirvish-expire.8,v 12.0 2004/02/25 02:42:14 jw Exp $  $Name: Dirvish-1_2 $
+.ds d \-\^\-
+.ds o \fR[\fP
+.ds c \fR]\fP
+.ds | \fR|\fP
+.ds bank \fIbank\fP
+.ds vault \fIvault\fP
+.ds branch \fIbranch\fP
+.ds image \fIimage\fP
+.de D
+\\.B \*d\\$1
+..
+.de DR
+\\.BR \*d\\$1 \\$2
+..
+.de Bi
+\\.BI \\$1 " \\$2"
+..
+.de DI
+\\.BI \*d\\$1 \\$2
+..
+.de Di
+\\.BI \*d\\$1 " \\$2"
+..
+.de See
+See \fB\\$1\fP for more details.
+..
+.de SeeIn
+See \fB\\$1\fP in \fB\\$2\fP for more details.
+..
+.de multiple
+Multiple \fB\\$1:\fP values will accumulate.
+..
+.de default
+Default value: \fB\\$1\fP
+..
+.TH DIRVISH-EXPIRE 8
+.SH NAME
+dirvish\-expire \- delete expired dirvish images
+.SH SYNOPSIS
+.BI dirvish\-expire [OPTIONS]
+.SH DESCRIPTION
+Delete dirvish image trees or whole images that have expired.
+
+Each image
+.B summary
+file is checked for the
+.B Expire:
+field.
+If that field indicates the image has expired
+.B dirvish\-expire
+will delete that image from the vault.
+
+By default all subdirectories of all banks will be treated as vaults
+and all directories therein
+except the one named
+.B dirvish
+will be checked for summary files.
+
+The removal of an image will have no effect on other images.
+
+.B Dirvish\-expire
+will not delete an image
+unless it finds at least one image in that branch
+that has an intact image tree and
+.B "Status: success"
+in the summary that is not expired.
+.SH OPTIONS
+Each option on the command line may be specified any number of times.
+Those options that support lists in the config files
+will accumulate all of their arguments
+otherwise each specification will override the ones before.
+
+Each option may be unambiguously abbreviated.
+.TP
+.Di time time_expression
+Execute as though
+.I time_expression
+were the current time.
+
+.I Time_expression
+is processed by
+.B Time::Parsedate(3pm)
+so relative time and date strings are permitted.
+.See Time::Parsedate(3pm)
+.TP
+.D tree
+Only delete the image tree,
+leave in place the rest of the image directory with summary,
+log and any other image administrative files.
+.TP
+.Di vault vault
+Restrict expiration to the specified
+.IR vault .
+.TP
+.D no\-run
+Don't actually do anything.
+Just display what would have happened.
+.TP
+.D quiet
+Run quietly, only report errors.
+
+Normally
+.B dirvish\-expire
+will report the images deleted.
+.SH EXIT CODES
+To facilitate further automation and integration of
+.B dirvish-expire
+with other tools
+.B dirvish-expire
+provides rationalised exit codes.
+The exit codes are range based.  While the code for
+a specific error may change from one version to another it
+will remain within the specified range.  So don't test for
+specific exit codes but instead test for a range of values.
+To the degree possible higher value ranges indicate more
+severe errors.
+.TP
+0
+success
+.TP
+200-219
+An error was encountered in loading a configuration file.
+.TP
+220-254
+An error was detected in the configuration.
+.TP
+255
+Incorrect usage.
+.SH FILES
+.TP
+.B /etc/dirvish/master.conf
+alternate master configuration file.
+.TP
+.B /etc/dirvish.conf
+master configuration file.
+.TP
+.IB bank/vault/image/ summary
+image creation summary.
+.TP
+.IB bank/vault/image/ tree
+actual image of source directory tree.
+.SH SEE ALSO
+.nf
+dirvish.conf(5)
+Time::ParseDate(3pm)
+.SH BUGS
+.B Dirvish\-expire
+will walk the file hierarchy of all banks
+or the specified vault looking for summary files.
+Anything non-dirvish in there may cause excess file-walking.

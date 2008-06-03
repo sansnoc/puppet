@@ -1,0 +1,10 @@
+module cronolog 1.0.1;
+
+require {
+        class lnk_file { create unlink };
+        type httpd_log_t;
+        type httpd_t;
+        role system_r;
+};
+
+allow httpd_t httpd_log_t:lnk_file { create unlink };

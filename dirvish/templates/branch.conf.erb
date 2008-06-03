@@ -1,0 +1,9 @@
+client:         <%= host %>
+tree:           <%= fs %>
+xdev:           <%= xdev %>
+index:          <%= index %>
+image-default:  <%= name %>-%Y%m%d-%H%M%S 
+exclude:
+<% excludes.each do |rule| %>        <%= rule %>
+<% end %>
+

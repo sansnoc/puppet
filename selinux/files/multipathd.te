@@ -1,0 +1,23 @@
+
+module multipathd 1.0;
+
+require {
+	type tmp_t;
+	type sbin_t;
+	type bin_t;
+	type var_t;
+	type lvm_t;
+	type ramfs_t;
+	class file { write read create execute execute_no_trans };
+	class dir { write search create add_name mounton };
+	class filesystem mount;
+}
+
+#============= lvm_t ==============
+allow lvm_t bin_t:dir mounton;
+allow lvm_t ramfs_t:dir { write search add_name };
+allow lvm_t ramfs_t:file { write read create execute execute_no_trans };
+allow lvm_t ramfs_t:filesystem mount;
+allow lvm_t sbin_t:dir mounton;
+allow lvm_t tmp_t:dir mounton;
+allow lvm_t var_t:dir { write create add_name mounton };
