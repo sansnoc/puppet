@@ -67,7 +67,7 @@ alias -- -="cd -"
 # old habits die hard
 alias more="/usr/bin/less"
 # Quickly add sshkey.
-alias sshkey="ssh-add $HOME/.ssh/jtimberman"
+alias sshkey="ssh-add $HOME/.ssh/id_dsa"
 # vim > vi
 alias vi=/usr/bin/vim
 alias ps="COLUMNS=320 ps"
